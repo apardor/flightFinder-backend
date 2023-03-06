@@ -7,9 +7,11 @@ const app: Express = express();
 const port = process.env.PORT;
 
 
-app.get("/api",  (req: Request, res: Response)=>{
-    res.json({"users": ["user1", "user2", "user3"]})
+app.get("/",  async (req: Request, res: Response)=>{
+    res.status(200)
+    res.send('API is running');
 })
+
 
 
 app.listen(port, ()=>{
