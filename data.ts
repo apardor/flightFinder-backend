@@ -1,4 +1,4 @@
-[
+export const dataFlights = [
     {
         "route_id": "8efc39dd",
         "departureDestination": "Oslo",
