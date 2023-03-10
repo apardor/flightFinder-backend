@@ -2,82 +2,89 @@ import { Request, Response } from "express";
 import { dataFlights } from "./data";
 import Flights from "./models/models";
 
-
-
-
-
 const url = require('url')
 
-const flights = (departure: string, arrival: string ) =>{
-    let flights : any[] = [];
-    let arrivalFlights: any[] = [];
-    let departureFlights: any[] = [];
+const flights = async (departure: string, arrival: string ) =>{
+    const direct =  await Flights.find({departureDestination: departure, arrivalDestination: arrival})
+    const departureDest =  await Flights.find({departureDestination: departure,  arrivalDestination: { $ne: arrival }})
+    const arrivalDest =  await Flights.find({departureDestination: { $ne: departure }, arrivalDestination: arrival})
+    const connectingFlights =  departureDest.concat(arrivalDest)
 
-  
-    dataFlights.find( data => {
-        if(data.departureDestination === departure && data.arrivalDestination === arrival){
-          flights.push(data)
-           }
-        });
-
-    dataFlights.find(data => {
-        if(data.departureDestination !== departure && data.arrivalDestination === arrival){
-            arrivalFlights.push(data)
-            dataFlights.find( data => {
-                if(data.departureDestination === departure){
-                    departureFlights.push(data)  
-                    return flights = departureFlights.concat(arrivalFlights)
- 
-                }
-            })
-        }
-    })
-    return flights
+    if (direct.length > 0) {
+        return direct
+    }  else if(departureDest.length > 0 && arrivalDest.length > 0){
+        return  connectingFlights
+    }
 }
 
-const schedule = (departureAt:string, arrivalAt:string) => {
+
+const schedule = async (departureAt:string, arrivalAt:string) => {
     let scheduleFlights : any[] = []
-    dataFlights.map( data => {
+    const allFlights = await Flights.find({});
+    allFlights.map( data => {        
         data.itineraries.filter( scheduleData => {
             if(scheduleData.departureAt === departureAt || scheduleData.arrivalAt === arrivalAt){
-                scheduleFlights.push(scheduleData )  
+                 scheduleFlights.push(scheduleData)
             }
         })
     })
     return scheduleFlights;
 }
 
+const book = async (flightID:string) =>{
+    const book = await Flights.findById({flightID });
+    return book
+
+}
+
 
 
 export const readAllFlights = async (req: Request, res: Response) =>{
-    return Flights.find()
-    .then((flights) => res.status(200).json({ flights }))
-    .catch((error) => res.status(500).json({ error }));
+    try {
+        const allFlights = await Flights.find({});
+        res.status(200).send(allFlights);
+      } catch (e:any) {
+        console.log(e.message);
+        return
+      }
 }
 
 
-export const readConnections = (req: Request, res: Response) => {
-    const { query } = url.parse(req.url, true)
-    const departure = query.departure.charAt(0).toUpperCase() + query.departure.slice(1);
-    const arrival = query.arrival.charAt(0).toUpperCase() + query.arrival.slice(1);
-    const flightsResults = flights(departure, arrival);
-    res.status(200).send(flightsResults)
+export const readConnections = async (req: Request, res: Response) => {
+    try{
+        const { query } = url.parse(req.url, true)
+        const departure = query.departure
+        const arrival = query.arrival
+        const flightsResults = await flights(departure, arrival);
+        res.status(200).send(flightsResults)
+    } catch (e:any) {
+        console.log(e.message);
+        return
+      }
 }
 
-export const readSchedule =  (req: Request, res: Response) => {
-    const { query } = url.parse(req.url, true)
-    const departureAt = query.departureAt;
-    const arrivalAt = query.arrivalAt;
-    const scheduleResults = schedule(departureAt, arrivalAt);
-    res.status(200).send(scheduleResults)
+export const readSchedule =  async (req: Request, res: Response) => {
+    try{
+        const { query } = url.parse(req.url, true)
+        const departureAt = query.departureAt;
+        const arrivalAt = query.arrivalAt;
+        const scheduleResults = await schedule(departureAt, arrivalAt);
+        res.status(200).send(scheduleResults)
+    }catch (e:any) {
+        console.log(e.message);
+        return
+      }
 }
 
+export const booking =  async (req: Request, res: Response) => {
+    try{
+        const { query } = url.parse(req.url, true)
+        const flightID = query.flight_id;
+        const booking = await book(flightID);
+        res.status(200).send(booking)
+    }catch (e:any) {
+        console.log(e.message);
+        return
+      }
+}
 
-// export const connectingFLights = (req: Request, res: Response) =>{
-//     const { query } = url.parse(req.url, true)
-//     const departure = query.departure.charAt(0).toUpperCase() + query.departure.slice(1);
-//     const arrival = query.arrival.charAt(0).toUpperCase() + query.arrival.slice(1);
-//     const flightsConnectionResults = flightsConnections(departure, arrival);
-//     res.status(200).send(flightsConnectionResults)
-
-// }

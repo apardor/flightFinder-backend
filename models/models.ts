@@ -1,16 +1,11 @@
 import mongoose from "mongoose";
-import { config } from '../config';
-
-
-
-const flightsDB = mongoose.createConnection(config.mongo.url, { retryWrites: true, w: 'majority' })
 
 const Schema = mongoose.Schema;
 
 export interface IFlights{
     route_id: string;
     departureDestination: string;
-    arrivalDestination: number;
+    arrivalDestination: string;
     itineraries: [{
             flight_id: string,
             departureAt: string,
@@ -27,7 +22,7 @@ export interface IFlights{
 const FlightSchema = new Schema({
   route_id: String,
   departureDestination: String,
-  arrivalDestination: Number,
+  arrivalDestination: String,
   itineraries: [{
           flight_id: String,
           departureAt: String,
@@ -41,7 +36,7 @@ const FlightSchema = new Schema({
         }]
 })
 
-const Flights = flightsDB.model<IFlights>("flightsdbs", FlightSchema)
+const Flights = mongoose.model<IFlights>("flightsdbs", FlightSchema)
 
 
 export default Flights;
